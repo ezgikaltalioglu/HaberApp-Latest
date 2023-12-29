@@ -111,7 +111,7 @@ extension HaberEkrani: UITableViewDelegate, UITableViewDataSource{
         let haber = newsList[indexPath.row]
         performSegue(withIdentifier: "haberDetay", sender: haber)
     }
-    
+    //todo: change
     func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
         
         let favAction = UIContextualAction(style: .destructive, title: "Favori") { contextualAction, view, bool in
