@@ -47,8 +47,8 @@ class HaberEkrani: UIViewController {
         SideMenuManager.default.addPanGestureToPresent(toView: self.view)
         
         if let menuListController = sideMenu?.viewControllers.first as? MenuListController {
-                    menuListController.delegate = self
-                }
+            menuListController.delegate = self
+        }
         
         print("ViewDidload")
         if searchBar == nil {
@@ -56,11 +56,10 @@ class HaberEkrani: UIViewController {
         } else {
             searchBar.delegate = self
         }
-
+        
         
         tableView.dataSource = self
         tableView.delegate = self
-        tableView.isEditing = true
         viewModel.haberleriGetir(query: "")
         
         viewModel.newsList.subscribe(onNext: { liste in
@@ -73,7 +72,7 @@ class HaberEkrani: UIViewController {
         })
         .disposed(by: viewModel.disposeBag)
         
-
+        
     }
     deinit {
         print("HaberEkrani deinit")
@@ -94,7 +93,42 @@ class HaberEkrani: UIViewController {
 }
 
 extension HaberEkrani: UITableViewDelegate, UITableViewDataSource{
-    
+    func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
+        let favAction = UIContextualAction(style: .destructive, title: "Favori") { contextualAction, view, bool in
+            
+            let haber = self.newsList[indexPath.row]
+            
+            print("Favori ekleme işlemi başlıyor")
+            DispatchQueue.global().async {
+                newsFavorite.setValue(UUID(), forKey: "id")
+                newsFavorite.setValue(self.userId, forKey: "user_id")
+                newsFavorite.setValue(haber.url!, forKey: "url")
+                newsFavorite.setValue(haber.urlToImage, forKey: "img")
+                newsFavorite.setValue(haber.title!, forKey: "title")
+                do {
+                    try context.save()
+                    HaberApp.Util.showAlert(in: self, title: "Başarılı", message: "Favorilere Eklendi.")
+                    print("Success")
+                } catch {
+                    print("Error!!!")
+                }
+                print("Favori ekleme işlemi tamamlandı")
+            }
+            
+            
+            do {
+                try context.save()
+                print("Başarılı\(newsFavorite)")
+                
+                HaberApp.Util.showAlert(in: self, title: "Başarılı", message: "Favorilere eklendi.")
+            } catch {
+                print("Hata!!!")
+            }
+        }
+        
+        return UISwipeActionsConfiguration(actions: [favAction])
+        
+    }
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return newsList.count
     }
@@ -107,18 +141,10 @@ extension HaberEkrani: UITableViewDelegate, UITableViewDataSource{
         return cell
     }
     
+    
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         let haber = newsList[indexPath.row]
         performSegue(withIdentifier: "haberDetay", sender: haber)
-    }
-    //todo: change
-    func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
-        
-        let favAction = UIContextualAction(style: .destructive, title: "Favori") { contextualAction, view, bool in
-            HaberApp.Util.showAlert(in: self, title: "Başarılı", message: "Favorilere Eklendi.")
-            
-        }
-        return UISwipeActionsConfiguration(actions: [favAction])
     }
     
 }
@@ -126,16 +152,16 @@ extension HaberEkrani: UITableViewDelegate, UITableViewDataSource{
 /* let news = self.newsList[indexPath.row]
  
  DispatchQueue.global().async {
-     newsFavorite.setValue(UUID(), forKey: "id")
-     newsFavorite.setValue(self.userId, forKey: "user_id")
-     newsFavorite.setValue(news.url, forKey: "url")
-     
-     do{
-         try context.save()
-         HaberApp.Util.showAlert(in: self, title: "Başarılı", message: "Favorilere Eklendi.")
-     }catch{
-         print("Favorilere ekleme erroru!!!!")
-     }
+ newsFavorite.setValue(UUID(), forKey: "id")
+ newsFavorite.setValue(self.userId, forKey: "user_id")
+ newsFavorite.setValue(news.url, forKey: "url")
+ 
+ do{
+ try context.save()
+ HaberApp.Util.showAlert(in: self, title: "Başarılı", message: "Favorilere Eklendi.")
+ }catch{
+ print("Favorilere ekleme erroru!!!!")
+ }
  } */
 
 extension HaberEkrani: UISearchBarDelegate{
@@ -178,7 +204,7 @@ class MenuListController: UITableViewController{
     
 }
 
-extension HaberEkrani: MenuListControllerDelegate{    
+extension HaberEkrani: MenuListControllerDelegate{
     
     func didSelectSideMenu(item: String) {
         
